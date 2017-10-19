@@ -2,10 +2,13 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
+#include <iostream>
+#include <time.h>
 
 //Game general information
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
+#define FPS 60
 
 int main(int, char*[]) {
 
@@ -32,15 +35,27 @@ int main(int, char*[]) {
 
 	SDL_Rect bgRect{ 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-	SDL_Texture *playerTexture{ IMG_LoadTexture(renderer, "../../res/img/kintoun.png") };
+	/*SDL_Texture *playerTexture{ IMG_LoadTexture(renderer, "../../res/img/kintoun.png") };
 
 	if (playerTexture == nullptr) throw "No s'han pogut crear les textures";
 
 	SDL_Rect playerRect{ 0, 0, 350, 189 };
 
-	SDL_Rect playerTarget{ 0, 0, 100, 100 };
+	SDL_Rect playerTarget{ 0, 0, 100, 100 };*/
 
 	// --- Animated Sprite ---
+
+	SDL_Texture *playerTexture{ IMG_LoadTexture(renderer,"../../res/img/sp01.png") };
+	SDL_Rect playerRect, playerPosition;
+	int textWidth, textHeight, frameWidth, frameHeight;
+	SDL_QueryTexture(playerTexture, NULL, NULL, &textWidth, &textHeight);
+	frameWidth = textWidth / 6;
+	frameHeight = textHeight / 1;
+	playerPosition.x = playerPosition.y = 0;
+	playerRect.x = playerRect.y = 0;
+	playerPosition.h = playerRect.h = frameHeight;
+	playerPosition.w = playerRect.w = frameWidth;
+	int frameTime = 0;
 
 // --- TEXT ---
 
@@ -65,6 +80,12 @@ int main(int, char*[]) {
 	Mix_VolumeMusic(MIX_MAX_VOLUME / 2);
 	Mix_PlayMusic(soundtrack, -1);
 
+	// --- TIME ---
+
+	clock_t lasttime = clock();
+	float timeDown = 10;
+	float deltaTime = 0;
+
 	// --- GAME LOOP ---
 	SDL_Event event;
 	bool isRunning = true;
@@ -74,8 +95,8 @@ int main(int, char*[]) {
 			switch (event.type) {
 			case SDL_QUIT:		isRunning = false; break;
 			case SDL_MOUSEMOTION: //playerRect.x = event.motion.x; playerRect.y = event.motion.y; break;
-				playerTarget.x = event.motion.x - 50;
-				playerTarget.y = event.motion.y - 50;
+				/*playerTarget.x = event.motion.x - 50;
+				playerTarget.y = event.motion.y - 50;*/
 				break;
 			case SDL_KEYDOWN:	if (event.key.keysym.sym == SDLK_ESCAPE) isRunning = false; break;
 			default:;
@@ -83,8 +104,22 @@ int main(int, char*[]) {
 		}
 
 		// UPDATE
-		playerRect.x += (playerTarget.x - playerRect.x) / 10;
-		playerRect.y += (playerTarget.y - playerRect.y) / 10;
+		/*playerRect.x += (playerTarget.x - playerRect.x) / 10;
+		playerRect.y += (playerTarget.y - playerRect.y) / 10;*/
+
+		deltaTime = (clock() - lasttime);
+		lasttime = clock();
+		deltaTime /= CLOCKS_PER_SEC;
+		timeDown -= deltaTime;
+		std::cout << timeDown << std::endl;
+		frameTime++;
+		if (FPS / frameTime <= 9) {
+			frameTime = 0;
+			playerRect.x += frameWidth;
+			if (playerRect.x >= textWidth)
+				playerRect.x = 0;
+		}
+
 
 		// DRAW
 			//Background
@@ -93,11 +128,13 @@ int main(int, char*[]) {
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, bgTexture, nullptr, &bgRect);
 		SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
-		SDL_RenderCopy(renderer, playerTexture, nullptr, &playerRect);
+		//SDL_RenderCopy(renderer, playerTexture, nullptr, &playerRect);
 
 
 
 			//Animated Sprite
+	
+		SDL_RenderCopy(renderer, playerTexture, &playerRect, &playerPosition);
 		SDL_RenderPresent(renderer);
 
 	}
@@ -113,7 +150,7 @@ int main(int, char*[]) {
 
 
 	// --- QUIT ---
-	Mix_Quit();
+	Mix_Quit();	 
 	SDL_Quit();
 	IMG_Quit();
 	Mix_Quit();
